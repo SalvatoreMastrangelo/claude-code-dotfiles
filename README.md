@@ -16,6 +16,20 @@ The bars stretch to fill the terminal width. Below 5 blocks each they are droppe
 (`Fable 5.1 │ ctx 12% │ 5h 23% ↻ 16:40`), and on very narrow terminals the reset time goes too.
 Bars are gray, yellow from 75%, red from 90%.
 
+## Subagent rows
+
+`subagent-statusline.sh` adds the model to each row of the agent panel below the prompt,
+which by default shows only `name · description · token count`:
+
+```
+Count lines in dotfiles · Haiku 4.5 · 21.9k tokens
+```
+
+The main status line always describes the main session, even while viewing a subagent's chat,
+so this is where a subagent's model is visible. Model ids are shortened
+(`claude-haiku-4-5-20251001` becomes `Haiku 4.5`), long labels are cut to the row width, and
+a row whose model is not resolved yet keeps its default look.
+
 ## Install
 
 Needs `jq` (`apt install jq` / `brew install jq`).
@@ -26,9 +40,9 @@ cd claude-code-dotfiles
 ./install.sh
 ```
 
-`install.sh` copies `statusline.sh` to `~/.claude/` and adds the `statusLine` entry to
-`~/.claude/settings.json`. Every other setting in that file is left alone, and the previous
-version is saved as `settings.json.bak` when a change is made.
+`install.sh` copies both scripts to `~/.claude/` and adds the `statusLine` and
+`subagentStatusLine` entries to `~/.claude/settings.json`. Every other setting in that file is
+left alone, and the previous version is saved as `settings.json.bak` when a change is made.
 
 ## Update
 
@@ -36,7 +50,7 @@ version is saved as `settings.json.bak` when a change is made.
 git pull && ./install.sh
 ```
 
-After editing `~/.claude/statusline.sh` directly on a machine, copy it back here and commit
+After editing a script directly in `~/.claude/` on a machine, copy it back here and commit
 so the other machines can pull it.
 
 ## Tuning
@@ -48,4 +62,5 @@ At the top of `statusline.sh`:
 
 ## Uninstall
 
-Remove the `statusLine` entry from `~/.claude/settings.json` and delete `~/.claude/statusline.sh`.
+Remove the `statusLine` and `subagentStatusLine` entries from `~/.claude/settings.json` and
+delete `~/.claude/statusline.sh` and `~/.claude/subagent-statusline.sh`.
