@@ -20,16 +20,17 @@ IFS=$'\t' read -r MODEL CTX FIVE RESETS_AT < <(jq -r '[
 ] | @tsv' <<<"$input" 2>/dev/null)
 MODEL=${MODEL:-?}; CTX=${CTX:-0}; FIVE=${FIVE:--}; RESETS_AT=${RESETS_AT:--}
 
-# Yellow from 75%, red from 90%; empty below that (gray bar, plain number)
+# tint PCT [YELLOW_AT RED_AT] -> yellow from YELLOW_AT, red from RED_AT; empty
+# below that (gray bar, plain number). Defaults to 75/90, the 5h limit's thresholds.
 tint() {
-  if (( $1 >= 90 )); then printf '%s' "$RED"
-  elif (( $1 >= 75 )); then printf '%s' "$YELLOW"; fi
+  if (( $1 >= ${3:-90} )); then printf '%s' "$RED"
+  elif (( $1 >= ${2:-75} )); then printf '%s' "$YELLOW"; fi
 }
 
-# meter PCT WIDTH -> "▓▓░░░░ 12%", or just "12%" when WIDTH is 0
+# meter PCT WIDTH [YELLOW_AT RED_AT] -> "▓▓░░░░ 12%", or just "12%" when WIDTH is 0
 meter() {
   local pct=$1 width=$2 color filled full empty
-  color=$(tint "$pct")
+  color=$(tint "$pct" "${@:3}")
   if (( width > 0 )); then
     (( filled = pct > 100 ? width : pct * width / 100 ))
     printf -v full '%*s' "$filled" ''
@@ -78,4 +79,4 @@ else
   [[ -n $RESET_TIME ]] && five_part+=" ${DIM}↻ ${RESET_TIME}${RST}"
 fi
 
-printf '%s%sctx %s%s%s\n' "$MODEL" "$SEP" "$(meter "$CTX" "$width")" "$SEP" "$five_part"
+printf '%s%sctx %s%s%s\n' "$MODEL" "$SEP" "$(meter "$CTX" "$width" 50 70)" "$SEP" "$five_part"

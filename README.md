@@ -14,7 +14,8 @@ Fable 5.1 │ ctx ▓▓░░░░░░░░░░░░░░░░░ 12% 
 
 The bars stretch to fill the terminal width. Below 5 blocks each they are dropped
 (`Fable 5.1 │ ctx 12% │ 5h 23% ↻ 16:40`), and on very narrow terminals the reset time goes too.
-Bars are gray, yellow from 75%, red from 90%.
+Bars are gray until they warn you. The ctx bar turns yellow from 50% and red from 70%
+(a filling context window is worth acting on early); the 5h bar turns yellow from 75% and red from 90%.
 
 ## Subagent rows
 
