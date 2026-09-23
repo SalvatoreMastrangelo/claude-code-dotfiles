@@ -1,7 +1,8 @@
 #!/bin/bash
-# Claude Code status line: model │ context usage │ 5-hour rate-limit usage
+# Claude Code status line: model │ context usage │ 5-hour rate-limit usage │ 7-day rate-limit usage
 # Reads the session JSON from stdin (see https://code.claude.com/docs/en/statusline).
 # The two bars stretch to fill the terminal; below MIN_BAR blocks each they are dropped.
+# The weekly limit is shown as a bare percentage, never a bar, to keep it small.
 
 MIN_BAR=5   # narrowest useful bar; anything smaller falls back to the compact form
 MARGIN=4    # columns left free for Claude Code's own indentation around the row
@@ -11,17 +12,19 @@ input=$(cat)
 GRAY=$'\033[90m'; YELLOW=$'\033[33m'; RED=$'\033[31m'; DIM=$'\033[2m'; RST=$'\033[0m'
 
 # "-" marks an absent value: rate_limits only appears after the first API
-# response, and context percentage can be null early in a session.
-IFS=$'\t' read -r MODEL CTX FIVE RESETS_AT < <(jq -r '[
+# response (and each window can be missing on its own), and context percentage
+# can be null early in a session.
+IFS=$'\t' read -r MODEL CTX FIVE RESETS_AT WEEK < <(jq -r '[
   (.model.display_name // "?"),
   (.context_window.used_percentage // 0 | floor),
   (.rate_limits.five_hour.used_percentage | if . == null then "-" else floor end),
-  (.rate_limits.five_hour.resets_at // "-")
+  (.rate_limits.five_hour.resets_at // "-"),
+  (.rate_limits.seven_day.used_percentage | if . == null then "-" else floor end)
 ] | @tsv' <<<"$input" 2>/dev/null)
-MODEL=${MODEL:-?}; CTX=${CTX:-0}; FIVE=${FIVE:--}; RESETS_AT=${RESETS_AT:--}
+MODEL=${MODEL:-?}; CTX=${CTX:-0}; FIVE=${FIVE:--}; RESETS_AT=${RESETS_AT:--}; WEEK=${WEEK:--}
 
 # tint PCT [YELLOW_AT RED_AT] -> yellow from YELLOW_AT, red from RED_AT; empty
-# below that (gray bar, plain number). Defaults to 75/90, the 5h limit's thresholds.
+# below that (gray bar, plain number). Defaults to 75/90, the rate limits' thresholds.
 tint() {
   if (( $1 >= ${3:-90} )); then printf '%s' "$RED"
   elif (( $1 >= ${2:-75} )); then printf '%s' "$YELLOW"; fi
@@ -52,7 +55,8 @@ RESET_TIME=""
 [[ $FIVE != "-" && $RESETS_AT != "-" ]] && RESET_TIME=$(clock "$RESETS_AT")
 
 # Visible length of the bar-less line, counted by hand so it does not depend
-# on the locale: "MODEL │ ctx NN% │ 5h NN% ↻ HH:MM" or "... │ 5h --"
+# on the locale: "MODEL │ ctx NN% │ 5h NN% ↻ HH:MM │ 7d NN%", with "--" in
+# place of a missing 5h or 7d value
 bars=1
 len=$(( ${#MODEL} + 3 + 4 + ${#CTX} + 1 + 3 + 3 ))
 if [[ $FIVE == "-" ]]; then
@@ -61,6 +65,12 @@ else
   bars=2
   (( len += ${#FIVE} + 1 ))
   [[ -n $RESET_TIME ]] && (( len += 3 + ${#RESET_TIME} ))
+fi
+(( len += 3 + 3 ))
+if [[ $WEEK == "-" ]]; then
+  (( len += 2 ))
+else
+  (( len += ${#WEEK} + 1 ))
 fi
 
 # Split what is left of the row between the bars (each costs its width + a space)
@@ -78,5 +88,10 @@ else
   five_part="5h $(meter "$FIVE" "$width")"
   [[ -n $RESET_TIME ]] && five_part+=" ${DIM}↻ ${RESET_TIME}${RST}"
 fi
+if [[ $WEEK == "-" ]]; then
+  week_part="7d ${DIM}--${RST}"
+else
+  week_part="7d $(meter "$WEEK" 0)"   # width 0: percentage only
+fi
 
-printf '%s%sctx %s%s%s\n' "$MODEL" "$SEP" "$(meter "$CTX" "$width" 50 70)" "$SEP" "$five_part"
+printf '%s%sctx %s%s%s%s%s\n' "$MODEL" "$SEP" "$(meter "$CTX" "$width" 50 70)" "$SEP" "$five_part" "$SEP" "$week_part"

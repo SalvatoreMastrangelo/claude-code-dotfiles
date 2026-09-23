@@ -4,18 +4,20 @@ My Claude Code status line, kept here so every machine gets the same one.
 Claude Code does not sync `~/.claude/settings.json` across machines, so this repo does it.
 
 ```
-Fable 5.1 │ ctx ▓▓░░░░░░░░░░░░░░░░░ 12% │ 5h ▓▓▓▓░░░░░░░░░░░░░░░ 23% ↻ 16:40
+Fable 5.1 │ ctx ▓▓░░░░░░░░░░░░░░░░░ 12% │ 5h ▓▓▓▓░░░░░░░░░░░░░░░ 23% ↻ 16:40 │ 7d 41%
 ```
 
 - **Model** currently in use
 - **ctx**: share of the context window used
 - **5h**: share of the 5-hour usage limit consumed, and the time the window resets
   (shows `--` until the first response of a session)
+- **7d**: share of the weekly usage limit consumed, as a bare percentage with no bar so it
+  takes as little room as possible (also `--` until the first response)
 
 The bars stretch to fill the terminal width. Below 5 blocks each they are dropped
-(`Fable 5.1 │ ctx 12% │ 5h 23% ↻ 16:40`), and on very narrow terminals the reset time goes too.
+(`Fable 5.1 │ ctx 12% │ 5h 23% ↻ 16:40 │ 7d 41%`), and on very narrow terminals the reset time goes too.
 Bars are gray until they warn you. The ctx bar turns yellow from 50% and red from 70%
-(a filling context window is worth acting on early); the 5h bar turns yellow from 75% and red from 90%.
+(a filling context window is worth acting on early); the 5h bar and the 7d figure turn yellow from 75% and red from 90%.
 
 ## Subagent rows
 
